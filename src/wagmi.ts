@@ -1,16 +1,17 @@
-import { createConfig, http } from 'wagmi'
-import { mainnet, sepolia } from 'wagmi/chains'
+import { http, webSocket, createConfig, fallback } from 'wagmi'
+import { sepolia } from 'wagmi/chains'
+import { injected } from 'wagmi/connectors'
 
 export const config = createConfig({
-  chains: [mainnet, sepolia],
+  chains: [sepolia],
+  connectors: [
+    injected(),
+  ],
   transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
+    [sepolia.id]: fallback([
+      webSocket("wss://ethereum-sepolia-rpc.publicnode.com"), 
+      http("https://ethereum-sepolia.gateway.tatum.io")
+    ]),
   },
+  multiInjectedProviderDiscovery: false,
 })
-
-declare module 'wagmi' {
-  interface Register {
-    config: typeof config
-  }
-}

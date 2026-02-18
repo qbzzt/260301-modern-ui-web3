@@ -1,15 +1,15 @@
 import { 
           useState, 
           useEffect,
-          useCallback, 
-        } from 'react'
+       } from 'react'
 import {  useChainId, 
           useAccount,
           useReadContract, 
           useWriteContract,
           useWatchContractEvent,
           useSimulateContract
-        } from 'wagmi'
+       } from 'wagmi'
+import { AddressType } from 'abitype'
 
 let greeterABI = [
   {
@@ -60,11 +60,38 @@ let greeterABI = [
 ]  // greeterABI
 
 
+type AddressPerBlockchainType = {
+  [key: number]: AddressType
+}
 
 
-const contractAddrs = {
+const contractAddrs : AddressPerBlockchainType = {
   // Sepolia
     11155111: '0xC87506C66c7896366b9E988FE0aA5B6dDE77CFfA'
+}
+
+type TimerProps = {
+  lastUpdate: Date
+}
+
+const Timer = ({ lastUpdate }: TimerProps) => {
+  const [_, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setNow(new Date())
+    }, 1000)
+
+    return () => clearInterval(id)
+  }, [])
+
+  const secondsSinceUpdate = Math.floor(
+    (Date.now() - lastUpdate.getTime()) / 1000
+  )
+
+  return (
+    <span>{secondsSinceUpdate} seconds ago</span>
+  )
 }
 
 const Greeter = () => {  
@@ -82,9 +109,11 @@ const Greeter = () => {
   })
 
   const [ currentGreeting, setCurrentGreeting ] = 
-    useState("Loading...")
+    useState("Please wait while we fetch the greeting from the blockchain...")
   const [ newGreeting, setNewGreeting ] = useState("")
   const [ lastSetterAddress, setLastSetterAddress ] = useState("")
+  const [ status, setStatus ] = useState("")
+  const [ statusTime, setStatusTime ] = useState(new Date())
 
   useEffect(() => {
     if (readResults.data) {
@@ -92,24 +121,30 @@ const Greeter = () => {
     }
   }, [readResults.data])
 
-  if (greeterAddr) {
-    useWatchContractEvent({
-      address: greeterAddr,
-      abi: greeterABI,
-      eventName: 'SetGreeting',
-      chainId,
-      onLogs(logs) {
-        const greetingFromContract = logs[0].args.greeting
-        setCurrentGreeting(greetingFromContract)
-        setLastSetterAddress(logs[0].args.sender)
-      },
-    })
+  useWatchContractEvent({
+    address: greeterAddr,
+    abi: greeterABI,
+    eventName: 'SetGreeting',
+    chainId,
+    enabled: !!greeterAddr,
+    onLogs(logs) {
+      const greetingFromContract = logs[0].args.greeting
+      setCurrentGreeting(greetingFromContract)
+      setLastSetterAddress(logs[0].args.sender)
+      updateStatus("Greeting updated!")
+    },
+  })
+
+
+  const updateStatus = newStatus => {
+    setStatus(newStatus)
+    setStatusTime(new Date())
   }
 
   const greetingChange = (evt) =>
     setNewGreeting(evt.target.value)
   
-  const { writeContract } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
 
   const simulation = useSimulateContract({
     address: greeterAddr,
@@ -122,23 +157,29 @@ const Greeter = () => {
   return (
     <>
       <h2>Greeter</h2>
-      {readResults.isLoading ? "Loading..." : currentGreeting}
+      {currentGreeting}
       {lastSetterAddress && (
-        <p>Last updated by: {lastSetterAddress}</p>
+        <p>Last updated by {
+          lastSetterAddress == account.address ? "you" : lastSetterAddress
+        }</p>
       )}
       <hr />      
       <input type="text"
         value={newGreeting}
-        onChange={greetingChange}      
+        onChange={greetingChange}
       />
       <br />
       <button disabled={!simulation.data}
-              onClick={() => writeContract(
-                simulation.data.request
-              )}
+        onClick={async () => {
+          updateStatus("Please confirm in wallet...")
+          await writeContractAsync(simulation.data.request)
+          updateStatus("Transaction sent, waiting for greeting to change...")
+        }}
       >
         Update greeting
       </button>
+      <h4>Status: {status}</h4>
+      <p>Updated <Timer lastUpdate={statusTime} /> </p>
     </>
   )
 }

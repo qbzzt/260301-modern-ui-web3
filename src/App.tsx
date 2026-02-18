@@ -1,16 +1,29 @@
 import { 
   useConnect, 
   useConnection, 
-  useConnectors, 
-  useDisconnect 
+  useDisconnect,
+  useSwitchChain 
 } from 'wagmi'
 
+import { useEffect } from 'react'
+
 import { Greeter } from './Greeter'
+
+const SEPOLIA_CHAIN_ID = 11155111
 
 function App() {
   const connection = useConnection()
   const { connectors, connect, status, error } = useConnect()
   const { disconnect } = useDisconnect()
+  const { switchChain } = useSwitchChain()
+
+  useEffect(() => {
+    if (connection.status === 'connected' && 
+        connection.chainId !== SEPOLIA_CHAIN_ID
+    ) {
+      switchChain({ chainId: SEPOLIA_CHAIN_ID })
+    }
+  }, [connection.status, connection.chainId])
 
   return (
     <>
