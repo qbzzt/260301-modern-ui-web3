@@ -110,6 +110,7 @@ const Greeter = () => {
   useEffect(() => {
     if (readResults.data) {
       setCurrentGreeting(readResults.data)
+      setStatus("Greeting fetched from blockchain")
     }
   }, [readResults.data])
 
@@ -119,11 +120,11 @@ const Greeter = () => {
     eventName: 'SetGreeting',
     chainId,
     enabled: !!greeterAddr,
-    onLogs(logs) {
+    onLogs: logs => {
       const greetingFromContract = logs[0].args.greeting
       setCurrentGreeting(greetingFromContract)
       setLastSetterAddress(logs[0].args.sender)
-      updateStatus("Greeting updated!")
+      updateStatus("Greeting updated by event")
     },
   })
 
