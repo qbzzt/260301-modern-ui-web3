@@ -98,8 +98,6 @@ const Greeter = () => {
     address: greeterAddr,
     abi: greeterABI,
     functionName: "greet", // No arguments
-    watch: true,
-    chainId
   })
 
   const [ currentGreeting, setCurrentGreeting ] = 
