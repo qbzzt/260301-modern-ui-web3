@@ -77,13 +77,7 @@ type TimerProps = {
 const Timer = ({ lastUpdate }: TimerProps) => {
   const [_, setNow] = useState(new Date())
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setNow(new Date())
-    }, 1000)
-
-    return () => clearInterval(id)
-  }, [])
+  setInterval(() => setNow(new Date), 1000)
 
   const secondsSinceUpdate = Math.floor(
     (Date.now() - lastUpdate.getTime()) / 1000
