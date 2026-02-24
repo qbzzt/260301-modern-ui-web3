@@ -156,7 +156,7 @@ const Greeter = () => {
       {currentGreeting}
       {lastSetterAddress && (
         <p>Last updated by {
-          lastSetterAddress == account.address ? "you" : lastSetterAddress
+          lastSetterAddress === account.address ? "you" : lastSetterAddress
         }</p>
       )}
       <hr />      
