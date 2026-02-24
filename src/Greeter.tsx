@@ -129,7 +129,7 @@ const Greeter = () => {
   })
 
 
-  const updateStatus = newStatus => {
+  const updateStatus = (newStatus: string) => {
     setStatus(newStatus)
     setStatusTime(new Date())
   }
