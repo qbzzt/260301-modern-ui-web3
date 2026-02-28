@@ -8,10 +8,7 @@ export const config = createConfig({
     injected(),
   ],
   transports: {
-    [sepolia.id]: fallback([
-      webSocket("wss://ethereum-sepolia-rpc.publicnode.com"), 
-      http("https://ethereum-sepolia.gateway.tatum.io")
-    ]),
+    [sepolia.id]: http() 
   },
   multiInjectedProviderDiscovery: false,
 })
